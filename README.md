@@ -2,6 +2,7 @@
 
 ## Team Member
 Linhan Li
+Junhua Yang
 
 ## Introduction
 Gomoku, Five in a Row, is a traditional two-player chess game on a grid board. The objective is to be the first player to create an unbroken row of five stones horizontally, vertically, or diagonally on the board. We improve the game by allowing users to define the rules of this game. They may decide how many stones in an unbroken row will select game winners. 
