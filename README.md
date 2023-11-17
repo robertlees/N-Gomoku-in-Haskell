@@ -12,7 +12,7 @@ Gomoku, Five in a Row, is a traditional two-player chess game on a grid board. T
 ## Rules of Gomoku:
 **Board**: The game is played on a square grid board, 15x15.<br>
 **Players**: Two players take turns placing their stones on the intersections of the grid.<br>
-**Define the rule**: choose the number N. If a user first creates an unbroken row of N stones, the user wins the game. N should be no less than 4.<br>
+**Define the rule**: Choose the number N (no less than 4). If a user first creates an unbroken row of N stones, the user wins the game.<br>
 **Starting the Game**: One player uses black stones, and the other uses white stones. The game begins with an empty board.<br>
 **Turns**: Players take turns placing one stone of their color on any vacant intersection of the grid.<br>
 **Winning Condition**: The first player to create an unbroken row of N stones in a horizontal, vertical, or diagonal direction wins the game. These rows are often called "N-in-a-row."<br>
