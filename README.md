@@ -33,3 +33,29 @@ The Project is divided into three milestones and may be adjusted based on team s
 	**Milestone 2**:  Implementation of the UI of the N-Gomoku game.<br>
 	**Milestone 3**:  Implementation of the network-related functions.<br>
 
+## Update (12/01/23)
+### 1. Architecture
+![ga2](./diagrams/game_architecture_solid.png)
+
+The project is formed by three main parts:<br>
+#### 1.1.User Interface
+Users can interact with game logic by getting game status from User Interface(UI) and bypassing their actions to change game status via UI.<br>
+#### 1.2.Game Logic
+The game logic component contains two subparts: Game Board and Game Status Agent. <br>
+**Game Board**: record game status <br>
+**Status Agent**: to see if any user wins the game <br>
+#### 1.3.Connecting Components
+The connecting components contain two subparts: Game Renderer and Action Handler. <br>
+**Game Renderer**: Rendering game status from game logic into UI, so the user can get game status from UI <br>
+**Action Handler**: Processing actions from users' inputs and changing the game status accordingly <br>
+
+### 2. Challenges
+1. Development under the Brick Schema. We need to learn and implement Brick Schema in a short time, which is a challenging task. To tackle the Brick schema, we examined different examples listed in the official git repo.<br>
+2. Game is a different application compared with other types of applications. It requires more interaction between the user and the system, so we took more time to consider different scenarios. <br>
+3. We still need to tackle game AI and multiplayer-related issues.<br>
+
+### 3. Expectations
+The priority of the project is the stability of the game. Beyond stability, we will try to implement other game functions. If we cannot catch up with the original schedule, we'll try our best to implement gaming AI or online gaming.
+
+
+   
