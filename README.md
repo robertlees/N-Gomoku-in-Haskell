@@ -35,7 +35,7 @@ The Project is divided into three milestones and may be adjusted based on team s
 
 ## Update (12/01/23)
 ### 1. Architecture
-![ga2](./diagrams/game_architecture_solid.png)
+![ga2](./doc/game_architecture_solid.png)
 
 The project is formed by three main parts:<br>
 #### 1.1.User Interface

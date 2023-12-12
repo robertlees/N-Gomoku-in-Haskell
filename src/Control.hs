@@ -1,3 +1,4 @@
+module Control where
 import Brick
 import Control.Monad
 

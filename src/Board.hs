@@ -1,4 +1,4 @@
-
+module Board where
 import qualified Data.Map as M
 import Data.List ()
 import Data.String ()
