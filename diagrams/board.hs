@@ -64,9 +64,17 @@ isOccupied :: (Ord a, Ord b) => M.Map (a, b) Blockstat -> a -> b -> Bool
 isOccupied  board  m n  =   board M.! (m,n) /= Empty
 
 
+outOfBoard :: (Ord a, Num a) => a -> a -> a -> Bool
+outOfBoard m n size = if m>=size then True
+                     else if m<0 then True
+                     else if n>=size then True
+                     else if n<0 then True
+                     else False
+
 addMove :: Board -> Int -> Int -> Side -> (Board, Bool)
 addMove (Mkboard board size) m n side =  if isOccupied board m n then (Mkboard board size, False)
-                                   else     (Mkboard (M.fromList[((m,n), Occupied side)] `M.union` board) size , True)
+                                        else  if outOfBoard m n size  then (Mkboard board size, False)
+                                        else   (Mkboard (M.fromList[((m,n), Occupied side)] `M.union` board) size , True)
 
 
 
