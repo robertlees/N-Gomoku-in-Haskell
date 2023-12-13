@@ -72,8 +72,8 @@ outOfBoard m n size = if m>=size then True
                      else False
 
 addMove :: Board -> Int -> Int -> Side -> (Board, Bool)
-addMove (Mkboard board size) m n side =  if isOccupied board m n then (Mkboard board size, False)
-                                        else  if outOfBoard m n size  then (Mkboard board size, False)
+addMove (Mkboard board size) m n side =  if outOfBoard m n size  then (Mkboard board size, False)
+                                        else  if isOccupied board m n then (Mkboard board size, False)
                                         else   (Mkboard (M.fromList[((m,n), Occupied side)] `M.union` board) size , True)
 
 
