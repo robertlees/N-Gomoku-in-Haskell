@@ -12,6 +12,7 @@ import Data.List ()
 import Data.String ()
 
 import Data.Char
+import GHC.Windows (ddwordToDwords)
 
 data Side = Black
             | White
@@ -80,8 +81,8 @@ outOfBoard m n size = if m>=size then True
                      else False
 
 addMove :: Board -> Int -> Int -> Side -> (Board, Bool)
-addMove (Mkboard board size) m n side =  if isOccupied board m n then (Mkboard board size, False)
-                                        else  if outOfBoard m n size  then (Mkboard board size, False)
+addMove (Mkboard board size) m n side =  if outOfBoard m n size  then (Mkboard board size, False)
+                                        else  if isOccupied board m n then (Mkboard board size, False)
                                         else   (Mkboard (M.fromList[((m,n), Occupied side)] `M.union` board) size , True)
 
 
@@ -112,13 +113,41 @@ sockHandler sock = do
     (conn2, _) <- accept sock  
     send conn1 (B8.pack "1")
     send conn2 (B8.pack "2")
-    forkIO $ boardInteract conn1 conn2 (initBoard [] 8)
+    forkIO $ boardInteract conn1 conn2 (initBoard [] 8) -- Board size init here
     sockHandler sock
+
+
+
+
 
 boardInteract :: Socket -> Socket -> Board -> IO ()
 boardInteract conn1 conn2 oldBoard = do
 
+    (newBoard, ended )<- oneMove conn1 conn2 oldBoard White
+
+    if ended == "0" then do
+                            (newBoard2, ended2 )<- oneMove conn2 conn1 newBoard Black
+
+                            if ended2 =="0" then boardInteract conn1 conn2 newBoard2
+                                            else putStrLn "Game ends \n"
+                    else
+                            putStrLn "Game ends \n"
+
+
+
+
+
+
+
+
+
+
+oneMove :: Socket -> Socket -> Board -> Side -> IO (Board, String)
+oneMove conn1 conn2 board side = do
+
     msg <- recv conn1 1000 
+                   
+
     let c1 = B8.unpack msg
     let cs = words c1
 
@@ -127,76 +156,24 @@ boardInteract conn1 conn2 oldBoard = do
     let m = read (cs !! 0)
     let n = read (cs !! 1)    
 
--- Update board after player 1 moves, board logic here
 
-    let newBoard = fst (addMove oldBoard m n White)
+    let (newBoard, valid) = addMove board m n side
 
-
--- end of logic
-
-
-
--- return results for player 1, UI here
-
-    putStrLn ("white move" ++ c1)
+    putStrLn (show side ++ " move" ++ c1)
     putStrLn (showBoard newBoard)
 
+    if valid  then do
+                            let ended = "0" -- judge here whether game ends, 0 for game continue, 1 for white wins and 2 for black wins 
 
-    send conn1  (B8.pack (showBoard newBoard ++ "\n"))
-
-    send conn2 (B8.pack( "opponent move " ++ c1 ++ "\n" ++ "\n" ++  (showBoard newBoard) ++ "\n" ) )
-
--- end of UI
-
-
-
-
-
-
-
-
-
-
-
-    msg <- recv conn2 1000 
-    let c1 = B8.unpack msg
-    let cs = words c1
-
-
-
-    let m = read (cs !! 0)
-    let n = read (cs !! 1)    
-
--- Update board after player 2 moves, board logic here
-
-    let newBoard2 = fst (addMove newBoard m n Black)
-
--- end of logic
-
-    putStrLn ("black move" ++ c1)
-    putStrLn (showBoard newBoard2)
-
-
-
-
-
-
--- return results for player 2, UI here
-
-    send conn1 (B8.pack( "opponent move " ++ c1 ++ "\n"  ++ "\n" ++  (showBoard newBoard2) ++ "\n" ) )
-
-    send conn2  (B8.pack (showBoard newBoard2 ++ "\n"))
-
--- end of UI
-
-
-
--- send signal of game continuing 
-
-
-
--- If (player win) then (send signal of game ending, send results with UI) else
-    boardInteract conn1 conn2 newBoard2
-
+                            send conn1  (B8.pack ended)
+                            send conn1  (B8.pack (showBoard newBoard ++ "\n")) 
+                            -- currently sending back a string, which is board representation with ascii, UI can be added here, but make sure it's in one string or changes at client side is needed
+                            send conn2  (B8.pack ended)
+                            send conn2 (B8.pack( "opponent move " ++ c1 ++ "\n" ++ "\n" ++  (showBoard newBoard) ++ "\n" ) )
+                            -- currently sending back a string, which is opponent move and board representation with ascii, UI can be added here,  but make sure it's in one string or changes at client side is needed
+                            return (newBoard, ended)
+                     else do
+                            send conn1  (B8.pack ("-1"))
+                            oneMove conn1 conn2 board side
 
 
