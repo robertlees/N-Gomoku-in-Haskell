@@ -1,88 +1,100 @@
 module UI where
 
-import Brick
-  ( App(..), AttrMap, BrickEvent(..), EventM, Widget
-  , customMain, neverShowCursor
-  , halt
-  , hLimit, vLimit, vBox, hBox
-  , padRight, padLeft, padTop, padAll, Padding(..)
-  , withBorderStyle
-  , str
-  , attrMap, withAttr, emptyWidget, AttrName, on, fg
-  , (<+>)
-  )
 
 import Board as GB
 import Control as GC
-import qualified Brick as B
-import qualified Brick.Widgets.Border as WB
-import qualified Brick.Widgets.Center as WC
-import qualified Brick.Widgets.Edit as WE
-import qualified Brick.Forms as BF
-import qualified Board as GB
--- import Lens.Micro.TH (makeLenses)
--- import Lens.Micro ((&), (.~), (%~), (^.))
+import Brick
+import Brick.Widgets.Table
+import Brick.Widgets.Center (center)
+import Data.List.Split
+import Data.List
+import qualified Data.Map as M
+import Lens.Micro.TH (makeLenses)
+import Lens.Micro ((&), (.~), (%~), (^.))
 -- import qualified Graphics.Vty as V
 
 
-data Game = Game
+data GameState = Game
   { _board  :: GB.Board -- ^ Gomoku Board
-  , _over   :: Bool     -- ^ game over
-  , _winner :: GB.Side  -- ^ winner of the game
-  , _current :: GB.Side
+  , _rule   :: Int     -- ^ how many stones in a line will win the game?
+  , _winner :: GB.Blockstat  -- ^ winner of the game
+  , _player :: GB.Side -- ^ current player
+  , _cursor  :: (Int, Int) -- ^ cursor's location
   } deriving (Show)
 
-type Name = ()
+ui :: Widget ()
+ui = center $ renderTable leftTable <+>
+              padLeft (Pad 5) (renderTable rightTableA <=>
+                               renderTable rightTableC)
 
 -- black and white stoness for gomoku game
 
-blockB, blockW :: B.Widget n
-blockB = B.str "⚫"
-blockW = B.str "⚪"
+stoneB, stoneW, validCursor, invalidCursor :: string
+stoneB = "⏺"
+stoneW = "🞅"
+validCursor = "⊙"
+invalidCursor = "⊗"
 
-drawUI g = 
-  [ WC.center $ padRight (Pad 2) (drawStats g) <+> drawBoard g ]
+mapStone :: GB.Blockstat -> Widget ()
+mapStone (Occupied White) = txt stoneW
+mapStone (Occupied Black) = txt stoneB
+mapStone _ = txt ""
 
-drawStats :: Game -> Widget Name
-drawStats g = hLimit 11
-  $ vBox [ drawScore (g ^. over) (g ^. winner)]
+mapCursor :: GB.Blockstat -> Widget ()
+mapCursor Empty = txt validCursor
+mapCursor _ = txt invalidCursor
 
-drawScore :: Bool -> GB.Side -> Widget Name
-drawScore over winner = 
-  if over 
-    then withBorderStyle BS.unicodeBold
-      $ WB.borderWithLabel (str "Winner")
-      $ WC.hCenter
-      $ padAll 1
-      $ str $ show winner
-    else emptyWidget
+elemToList :: a -> [a]
+elemToList e = [e]
+
+appendNum :: [a] -> [b] -> [b]
+appendNum [] lb = lb
+appendNum la [] = la
+appendNum la lb = case ((length la) == (length lb)) of
+  True -> zipWith (++) (fmap elemToList la) (fmap elemToList lb) 
 
 
-drawBoard :: Game -> Widget Name
-drawBoard g = withBorderStyle BS.unicodeBold
-  $ WB.borderWithLabel (str "Gomoku")
-  $ vBox rows
+drawUI :: Game -> Widget ()
+drawUI g = center $ renderTable leftTable <+>
+              padLeft (Pad 5) (renderTable rightTableA <=>
+                               renderTable rightTableB)
   where
-    rows         = [hBox $ cellsInRow r | r <- [height-1,height-2..0]]
-    cellsInRow y = [drawCoord (V2 x y) | x <- [0..width-1]]
-    drawCoord    = drawCell . cellAt
-    cellAt c
-      | c `elem` g ^. snake = Snake
-      | c == g ^. food      = Food
-      | otherwise           = Empty
+    leftTable = drawBoard g
+    rightTableA = drawPlayer g
+    rightTableB = drawWinner g
 
-drawCell :: GB.Blockstat -> Widget Name
-drawCell (Occupied Black) = withAttr blackAttr cw
-drawCell (Occupied White)  = withAttr whiteAttr cw
-drawCell Empty = withAttr emptyAttr cw
+drawBoard :: Game -> Table ()
+drawBoard g = 
+  setDefaultColAlignment AlignCenter $
+  table bd
+  where
+    bd = fmap mapStone glst
+    glst = (appendNum olst [1..15]) ++ flst 
+    flst = [txt "  1 ", txt "  2 ", txt "  3 ", txt "  4 ", txt "  5 ", txt "  6 ", txt "  7 ", txt "  8 ",txt "  9 ", txt "  10", txt "  11", txt "  12", txt "  13", txt "  14", txt "  15",txt "    "]
+    olst = splitEvery 15 (M.elem (M.toList bmap))
+    bmap =  getMap (g ^. board)
+    getMap (Mkboard bd sz) = bd
 
-cw :: Widget Name
-cw = str "  "
+drawPlayer :: Game -> Table()
+drawPlayer g = 
+  rowBorders False $
+  setDefaultColAlignment AlignCenter $
+  table [ [txt "Current",     mapStone (Occupied (g ^. player))]
+          , [txt "player", txt "    "]
+          ]
 
-blackAttr, whiteAttr, emptyAttr :: AttrName
-blackAttr = "blackAttr"
-whiteAttr = "whiteAttr"
-emptyAttr = "emptyAttr"
+drawWinner :: Game -> Table()
+drawWinner g = 
+  surroundingBorder False $
+  rowBorders False $
+  columnBorders False $
+  setDefaultColAlignment AlignCenter $
+  table [ [txt gstr,     mapStone (g ^. winner)]
+          , [txt wstr, txt "    "]
+          ]
+    where
+      gstr = if (g ^. winner) == Empty then "" else "Game End"
+      wstr = if (g ^. winner) == Empty then "" else "--> Winner"
 
 
 
