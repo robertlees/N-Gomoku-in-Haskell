@@ -100,6 +100,17 @@ drawWinner g =
       gstr = if (g ^. winner) == Empty then "" else "Game End"
       wstr = if (g ^. winner) == Empty then "" else "--> Winner"
 
+aMap :: AttrMap
+aMap = attrMap V.defAttr []
+
+app :: App Game Tick Name
+app = App { appDraw = drawUI
+          , appChooseCursor = neverShowCursor
+          , appHandleEvent = handleEvent
+          , appStartEvent = return
+          , appAttrMap = const aMap
+          }
+
 
 uiMain :: Socket -> Int -> IO ()
 uiMain socket n = do
