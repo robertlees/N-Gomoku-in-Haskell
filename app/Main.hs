@@ -10,6 +10,8 @@ import Data.List ()
 import Board
 import Control
 import UI 
+import Server
+import Client
 
 main :: IO ()
 main = do
@@ -17,24 +19,23 @@ main = do
     agency args
 
 agency :: [String] -> IO()
--- agency ["server"] = do
---     putStrLn $ "Welcome to the N-Gomoku server"
---     rn <- getRule
---     severMain rn
-
--- agency ["client"] = do
---     putStrLn $ "Welcome to the N-Gomoku client"
---     (socket,n) <- client
---     uiMain socket n
 
 agency l = do
     if l!!0 == "single" then do
         putStrLn $ "Welcome to the N-Gomoku Single"
         rn <- getRule
-        uiMain rn
-    else do
-        putStrLn $ "Invalid input"
-        return ()
+        uiMain Nothing rn 1
+        else if l!!0 == "server" then do
+            putStrLn $ "Welcome to the N-Gomoku server"
+            rn <- getRule
+            serverMain rn
+            else if l!!0 == "client" then do
+                putStrLn $ "Welcome to the N-Gomoku client"
+                (socket,n,s) <- client
+                uiMain (Just socket) n s
+                else do
+                    putStrLn $ "Invalid input"
+                    return ()
 
 
 getRule = do

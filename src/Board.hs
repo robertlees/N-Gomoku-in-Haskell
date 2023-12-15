@@ -34,7 +34,7 @@ data GameState = Game
   , _player :: Side -- ^ current player
   , _cursor  :: (Int, Int) -- ^ cursor's location
   , _end   :: Bool -- ^ is the game end?
-  , _socket :: Maybe Socket -- ^ network socket
+  , _skt :: Maybe Socket -- ^ network socket
   } deriving (Show)
 
 makeLenses ''GameState

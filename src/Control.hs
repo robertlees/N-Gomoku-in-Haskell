@@ -7,6 +7,7 @@ module Control where
 import Board
 -- import UI
 import Brick
+import Client
 import qualified Data.Map as M
 import Data.List (isInfixOf, transpose)
 import Data.String ()
@@ -16,6 +17,7 @@ import Lens.Micro (ix, (%~), (^?), (^.))
 import Lens.Micro.TH (makeLenses)
 import Data.List.Split.Internals
 import qualified Graphics.Vty as V
+import Control.Monad.IO.Class (liftIO)
 
 
 data Ctrlc = Upc | Downc | Leftc | Rightc deriving (Show)
@@ -77,13 +79,27 @@ handleEvent (VtyEvent (V.EvKey key [])) = do
     V.KDown     -> continNew $ cursorCtrl Downc game
     V.KLeft     -> continNew $ cursorCtrl Leftc game
     V.KRight    -> continNew $ cursorCtrl Rightc game
-    V.KEnter -> continNew $ checkWinAndUpdate (addMoveToGame game)
+    V.KEnter -> addMoveToGame game
 
     V.KChar ' ' -> continNew $ if (_end game) 
                              then game 
                              else makeMove game
     V.KChar 'c' -> halt
     _           -> continNew game
+
+handleEvent (AppEvent Tick) = do
+  game <- get
+  case (_skt game) of
+    Nothing -> do return ()
+    Just skt -> do
+      estone <- liftIO (receiver skt)
+      let (m,n) = estone
+      let boardSize = 15
+      let getMap (Mkboard bd sz) = bd
+      let updatedBoard = Mkboard (M.insert (m, n) (Occupied (_player game))  (getMap (_board game))) boardSize
+      continNew $ (game {_board = updatedBoard, _player = switchP game, _end = fst (checkWin updatedBoard (_rule game))})
+
+
 handleEvent _ = return ()
 
 -- handleEvent game (AppEvent Tick)  = continNew $ step game
@@ -118,15 +134,27 @@ makeMove game = if fst (checkWin (_board game) (_rule game))
 
 
 --Try adding this new function but not tested
-addMoveToGame :: GameState -> GameState
+addMoveToGame :: GameState -> EventM () GameState ()
 addMoveToGame game=
     if _end game
-        then game  -- If the game has already ended, do nothing
-        else if outOfBoard m n 15
-            then game -- If the move is out of bounds, do nothing
-            else if isOccupied (getMap (_board game)) m n 
-                then game -- If the cell is already occupied, do nothing
-                else game {_board = updatedBoard, _player = switchP game, _end = fst (checkWin updatedBoard (_rule game))}
+        then continNew game  -- If the game has already ended, do nothing
+        else if ((_player game) /= (_slf game)) && ((_skt game) /= Nothing)
+          then continNew game
+          else if outOfBoard m n 15
+              then continNew game -- If the move is out of bounds, do nothing
+              else if isOccupied (getMap (_board game)) m n 
+                  then continNew game -- If the cell is already occupied, do nothing
+                  else if ((_player game) == (_slf game)) && ((_skt game) /= Nothing)
+                    then do
+                      let stres = (show m) ++ " " ++ (show n)
+                      let Just sock = (_skt game)
+                      let res = sender sock stres
+                      let game_res = checkWin updatedBoard (_rule game)
+                      continNew $ game {_board = updatedBoard, _player = switchP game, _winner = checkWinAndUpdate game_res,_end = fst game_res}
+
+                    else do
+                      let game_res = checkWin updatedBoard (_rule game)
+                      continNew $ game {_board = updatedBoard, _player = switchP game, _winner = checkWinAndUpdate game_res,_end = fst game_res}
   where
     boardSize = 15
     updatedBoard = Mkboard (M.insert (m, n) (Occupied (_player game))  (getMap (_board game))) boardSize            --include the boardSize in 
@@ -135,13 +163,11 @@ addMoveToGame game=
 
 
 -- This is going to take use the checkWin to update the state
-checkWinAndUpdate :: GameState -> GameState
-checkWinAndUpdate game =
-    let result = checkWin (_board game) (_rule game)
-    in case result of
-        (True, "White wins") -> game {_end = True, _winner = Occupied White}
-        (True, "Black wins") -> game {_end = True, _winner = Occupied Black}
-        _                   -> game
+checkWinAndUpdate :: (Bool, String) -> Blockstat
+checkWinAndUpdate (True, "White wins") = Occupied White
+checkWinAndUpdate (True, "Black wins") = Occupied Black
+checkWinAndUpdate _                    = Empty
+
 
 -- controlMain :: IO ()
 -- controlMain = do

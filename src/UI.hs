@@ -8,6 +8,7 @@ import Data.Monoid ((<>))
 #endif
 import Board
 import Control
+import Network.Socket hiding (send, recv)
 import Brick
 import Brick.BChan
 import Brick.Widgets.Table
@@ -25,7 +26,6 @@ import qualified Graphics.Vty as V
 import Control.Monad (forever, void)
 import Control.Monad.IO.Class 
 import Control.Concurrent 
--- import Data.Maybe
 
 data Stone = StoneB | StoneW | ValidCursor | InvalidCursor | StoneEmpty
 
@@ -35,6 +35,10 @@ mapStoneTxt StoneW = txt "〇"
 mapStoneTxt StoneEmpty = txt ""
 mapStoneTxt ValidCursor = txt "✔"
 mapStoneTxt InvalidCursor = txt "✘"
+
+mapPlayer :: Int -> Side
+mapPlayer 1 = Black
+mapPlayer 2 = White
 
 mapStone :: Blockstat -> Stone
 mapStone (Occupied White) = StoneW
@@ -91,7 +95,7 @@ drawPlayer g =
           ]
     where
       cplayer = mapStoneTxt(mapStone (Occupied (g ^. player)))
-      splayer = if (g ^. socket) == Nothing then cplayer else mapStoneTxt(mapStone (Occupied (g ^. slf)))
+      splayer = if (_skt g) == Nothing then cplayer else mapStoneTxt(mapStone (Occupied (g ^. slf)))
 
 drawWinner :: GameState -> Table()
 drawWinner g = 
@@ -132,12 +136,12 @@ appUI = App { appDraw = drawUI
           , appAttrMap = const aMap
           }
 
-uiMain :: Int -> IO ()
-uiMain n = do
+uiMain :: Maybe Socket -> Int -> Int ->  IO ()
+uiMain sock n s = do
   
   let exampleBoard = initBoard sampleinit 15
       new =boardToStrings exampleBoard
-      g = Game (emptyBoard 15) n (Empty) Black Black (2,3) False Nothing
+      g = Game (emptyBoard 15) n (Empty) (mapPlayer s) Black (2,3) False sock
   chan <- newBChan 10
   forkIO $ forever $ do
     writeBChan chan Tick
@@ -147,11 +151,13 @@ uiMain n = do
   void $ customMain ivty (mkVty V.defaultConfig) (Just chan) appUI g
 
   -- simpleMain (drawUI g)
-  putStr $ showBoard exampleBoard
+  -- putStr $ showBoard exampleBoard
   -- print $ boardToStrings exampleBoard
   -- print (diagonals $ reverse new)
   -- print (diagonals new)
   -- print (checkWinB new 3)
-  print (checkWin exampleBoard 7)
+  -- print (checkWin exampleBoard 7)
+  -- print (_slf g)
+  -- print (_player g)
   -- let g2 = g { _rule=6 }
   -- print (_rule g2)

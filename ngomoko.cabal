@@ -18,6 +18,8 @@ library
       Board
       Control
       UI
+      Server
+      Client
   other-modules:
       Paths_ngomoko
   hs-source-dirs:
