@@ -1,0 +1,61 @@
+-------------------
+-- Update Game with a new "_end" attribute
+data Game = Game
+  { _board  :: GB.Board -- ^ Gomoku Board
+  , _rule   :: Int     -- ^ how many stones in a line will win the game?
+  , _winner :: GB.Blockstat  -- ^ winner of the game
+  , _player :: GB.Side -- ^ current player
+  , _cursor  :: (Int, Int) -- ^ cursor's location
+  , _end  :: Bool
+  , _socket :: Socket -- ^ network socket
+  } deriving (Show)
+
+-- Also include this in UI.hs
+
+handleEvent :: Game -> BrickEvent () e -> EventM () (Next Game)
+handleEvent game (VtyEvent (V.EvKey key [])) =
+  case key of
+    -- Move cursor
+    V.KUp       -> continue $ moveCursor Up 1 game
+    V.KDown     -> continue $ moveCursor Down 1 game
+    V.KLeft     -> continue $ moveCursor Left 1 game
+    V.KRight    -> continue $ moveCursor Right 1 game
+
+    V.KChar ' ' -> continue $ if (_end game) 
+                             then game 
+                             else makeMove game . freezeP game
+    V.KChar 'c' -> halt game
+    _           -> continue game
+
+------------------------------
+--Include in another file
+
+data Ctrl = Up | Down | Left | Right deriving (show)
+
+cursorCtrl :: Dir -> Game -> Game
+CursorCtrl control game = (\c -> game { cursor = c }) 
+    $ case control of
+    Game.Up -> (x, bound(y - 1))
+    Game.Down -> (x, bound (y + 1))
+    Game.Right  -> (bound (x + 1), y)
+    Game.Left  -> (bound (x - 1), y)
+  where
+    (x, y) = _cursor game
+    bound n
+      | n >= 9    = n - 9                   ---changes this to the size of the board
+      | n < 0     = n + 9
+      | otherwise = n
+
+switchP :: Game -> Game
+switchP game = game {_player = if last == White then Black else White}
+                    where last = _player game
+
+--need to write a function that is able to transform cursor to the board
+
+makeMove :: Game -> Game
+makeMove = if (checkWin (_rule game)) 
+           then game {_end = True}
+           else game {_cursor = (x, y), _player = switchP game}               --not finished should be able to call addMove from Board.hs
+                                                                              --Note: here player would not switch if the previous move wins the game. Thus, can extract the winner as the current player 
+
+
