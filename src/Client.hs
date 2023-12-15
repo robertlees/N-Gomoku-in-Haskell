@@ -52,7 +52,7 @@ receiver sock = do
                     if length n == 0 then do return Nothing
                     else do
                         let n2 = read ((n !! 0)::String)
-                        putStrLn (show (n2::Int))
+                        -- putStrLn (show (n2::Int))
                         let n3 = read ((n !! 1)::String)
-                        putStrLn (show (n3::Int))
+                        -- putStrLn (show (n3::Int))
                         return (Just (n2::Int, n3::Int ))-- x,y           
