@@ -59,3 +59,27 @@ makeMove = if (checkWin (_rule game))
                                                                               --Note: here player would not switch if the previous move wins the game. Thus, can extract the winner as the current player 
 
 
+--Try adding this new function but not tested
+addMoveToGame :: Game -> Game
+addMoveToGame game=
+    if _end game
+        then game  -- If the game has already ended, do nothing
+        else if outOfBoard m n (_boardSize (_board game))
+            then game -- If the move is out of bounds, do nothing
+            else if isOccupied (_board game) m n
+                then game -- If the cell is already occupied, do nothing
+                else game {_board = updatedBoard, _player = switchP game, _end = checkWin updatedBoard}
+  where
+    boardSize = _boardSize (_board game)
+    updatedBoard = Mkboard (M.insert (m, n) (Occupied side) (_board game)) boardSize            --include the boardSize in 
+    (m,n) = _cursor game
+
+
+-- This is going to take use the checkWin to update the state
+checkWinAndUpdate :: Game -> Game
+checkWinAndUpdate game =
+    let result = checkWin (_board game) (_rule game)
+    in case result of
+        (True, "White wins") -> game {_end = True, _winner = Just (Occupied White)}
+        (True, "Black wins") -> game {_end = True, _winner = Just (Occupied Black)}
+        _                   -> game
