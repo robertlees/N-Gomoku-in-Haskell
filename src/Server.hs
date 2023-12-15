@@ -81,10 +81,51 @@ boardInteract conn1 conn2 = do
         send conn2 msg
         putStrLn ("White move" ++ c2)
         -- putStrLn (showBoard newBoard2)
-        send conn1 msg2
+        m <- newEmptyMVar
+        forkIO $ do 
+            r <- send conn1 msg2
+            putMVar m r
+        r <- takeMVar m
+        return r
     else do
         putStrLn $ "no message from conn2"
         send conn1 msg2
 
     boardInteract conn1 conn2 
 
+-- sendClient :: Socket -> Socket -> IO Int
+-- sendClient conn1 conn2 = do
+--     putStrLn $ "reciving message conn "
+--     msg <- recv conn1 1000
+--     putStrLn $ "reciving message conn over"
+--     let c1 = B8.unpack msg
+--     let cs = words c1
+
+
+--     if length cs /= 0 then do 
+--         let m = read (cs !! 0) :: Int
+--         let n = read (cs !! 1) :: Int  
+--         -- let newBoard = fst (addMove oldBoard m n White)
+--         putStrLn (" move" ++ c1)
+--         -- putStrLn (showBoard newBoard)
+--         send conn2 msg
+--     else do
+--         putStrLn $ "no message from conn "
+--         send conn2 msg
+
+-- boardInteract :: Socket -> Socket -> IO ()
+-- boardInteract conn1 conn2 = do
+--     m <- newEmptyMVar
+--     forkIO $ do 
+--         r <- sendClient conn1 conn2
+--         putMVar m r
+--     r <- takeMVar m
+--     return r
+
+--     m <- newEmptyMVar
+--     forkIO $ do 
+--         r <- sendClient conn2 conn1
+--         putMVar m r
+--     r <- takeMVar m
+--     return r
+--     boardInteract conn1 conn2 

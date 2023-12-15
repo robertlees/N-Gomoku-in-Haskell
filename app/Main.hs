@@ -21,8 +21,8 @@ main = do
 agency :: [String] -> IO()
 
 agency l = do
-    if l!!0 == "single" then do
-        putStrLn $ "Welcome to the N-Gomoku Single"
+    if l!!0 == "offline" then do
+        putStrLn $ "Welcome to the N-Gomoku offline"
         rn <- getRule
         uiMain Nothing rn 1
         else if l!!0 == "server" then do

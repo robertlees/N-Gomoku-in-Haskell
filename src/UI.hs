@@ -47,7 +47,7 @@ mapStone _ = StoneEmpty
 
 mapCursor :: Stone -> Stone
 mapCursor StoneEmpty = ValidCursor
-mapCursor stone = stone
+mapCursor stone = InvalidCursor
 
 elemToList :: a -> [a]
 elemToList e = [e]

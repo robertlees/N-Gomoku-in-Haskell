@@ -85,10 +85,10 @@ handleEvent (VtyEvent (V.EvKey key [])) = do
     V.KRight    -> continNew $ cursorCtrl Rightc game
     V.KEnter -> addMoveToGame game
 
-    V.KChar ' ' -> continNew $ if (_end game) 
-                             then game 
-                             else makeMove game
-    V.KChar 'c' -> halt
+    -- V.KChar ' ' -> continNew $ if (_end game) 
+    --                          then game 
+    --                          else makeMove game
+    V.KEsc -> halt
     _           -> continNew game
 
 handleEvent (AppEvent Tick) = do
@@ -103,11 +103,12 @@ handleEvent (AppEvent Tick) = do
         let Just (m,n) = estone
         let boardSize = 15
         let getMap (Mkboard bd sz) = bd
-        if outOfBoard m n 15 then do return ()
+        if (outOfBoard m n 15) then do return ()
          else if isOccupied (getMap (_board game)) m n then do return ()
           else do
             let updatedBoard = Mkboard (M.insert (m, n) (Occupied (_player game))  (getMap (_board game))) boardSize
-            continNew $ (game {_board = updatedBoard, _player = switchP game, _end = fst (checkWin updatedBoard (_rule game))})
+            let game_res = checkWin updatedBoard (_rule game)
+            continNew $ (game {_board = updatedBoard, _player = switchP game, _winner = checkWinAndUpdate game_res,_end = fst game_res})
 
 
 handleEvent _ = return ()
