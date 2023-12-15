@@ -145,7 +145,7 @@ uiMain sock n s = do
   chan <- newBChan 10
   forkIO $ forever $ do
     writeBChan chan Tick
-    threadDelay 10000
+    threadDelay 100
 
   ivty <- mkVty V.defaultConfig
   void $ customMain ivty (mkVty V.defaultConfig) (Just chan) appUI g

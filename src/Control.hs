@@ -18,6 +18,7 @@ import Lens.Micro.TH (makeLenses)
 import Data.List.Split.Internals
 import qualified Graphics.Vty as V
 import Control.Monad.IO.Class (liftIO)
+import Control.Concurrent (forkIO)
 
 
 data Ctrlc = Upc | Downc | Leftc | Rightc deriving (Show)
@@ -68,7 +69,10 @@ checkWin board n = if checkWinW (boardToStrings board) n then (True,"White wins"
                    else (False, "no one wins")
 
 continNew :: GameState -> EventM () GameState ()
-continNew game = modify (\s -> game)
+continNew game = do 
+  put game
+  return ()
+  -- modify (\s -> game)
 
 handleEvent :: BrickEvent () Tick -> EventM () GameState ()
 handleEvent (VtyEvent (V.EvKey key [])) = do
@@ -89,15 +93,21 @@ handleEvent (VtyEvent (V.EvKey key [])) = do
 
 handleEvent (AppEvent Tick) = do
   game <- get
-  case (_skt game) of
-    Nothing -> do return ()
-    Just skt -> do
-      estone <- liftIO (receiver skt)
-      let (m,n) = estone
-      let boardSize = 15
-      let getMap (Mkboard bd sz) = bd
-      let updatedBoard = Mkboard (M.insert (m, n) (Occupied (_player game))  (getMap (_board game))) boardSize
-      continNew $ (game {_board = updatedBoard, _player = switchP game, _end = fst (checkWin updatedBoard (_rule game))})
+  if (_skt game) == Nothing then do return ()
+    else if (_player game) == (_slf game) then do return ()
+    else do
+      let Just sock = _skt game
+      estone <- liftIO (receiver sock)
+      if estone==Nothing then do return ()
+      else do
+        let Just (m,n) = estone
+        let boardSize = 15
+        let getMap (Mkboard bd sz) = bd
+        if outOfBoard m n 15 then do return ()
+         else if isOccupied (getMap (_board game)) m n then do return ()
+          else do
+            let updatedBoard = Mkboard (M.insert (m, n) (Occupied (_player game))  (getMap (_board game))) boardSize
+            continNew $ (game {_board = updatedBoard, _player = switchP game, _end = fst (checkWin updatedBoard (_rule game))})
 
 
 handleEvent _ = return ()
@@ -145,10 +155,10 @@ addMoveToGame game=
               else if isOccupied (getMap (_board game)) m n 
                   then continNew game -- If the cell is already occupied, do nothing
                   else if ((_player game) == (_slf game)) && ((_skt game) /= Nothing)
-                    then do
+                    then do 
                       let stres = (show m) ++ " " ++ (show n)
                       let Just sock = (_skt game)
-                      let res = sender sock stres
+                      res <- liftIO (sender sock stres)
                       let game_res = checkWin updatedBoard (_rule game)
                       continNew $ game {_board = updatedBoard, _player = switchP game, _winner = checkWinAndUpdate game_res,_end = fst game_res}
 

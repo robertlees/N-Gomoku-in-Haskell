@@ -7,8 +7,7 @@ module Client where
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString (send, recv)
 import qualified Data.ByteString.Char8 as B8
-
-import System.Environment (getArgs)
+import Control.Concurrent.MVar
 
 
 
@@ -44,14 +43,16 @@ sender sock str = do  --give a string "x y"
 
 
 
-receiver :: Socket -> IO (Int, Int)
+receiver :: Socket -> IO (Maybe (Int, Int))
 receiver sock = do
                     msg0 <- recv sock 1000
-                    let n = words ( B8.unpack msg0 ) 
-                
-                    let n2 = read ((n !! 0)::String)
-                    putStrLn (show (n2::Int))
-                    let n3 = read ((n !! 1)::String)
-                    putStrLn (show (n3::Int))
 
-                    return (n2::Int, n3::Int )-- x,y           
+                    let n = words ( B8.unpack msg0 )
+
+                    if length n == 0 then do return Nothing
+                    else do
+                        let n2 = read ((n !! 0)::String)
+                        putStrLn (show (n2::Int))
+                        let n3 = read ((n !! 1)::String)
+                        putStrLn (show (n3::Int))
+                        return (Just (n2::Int, n3::Int ))-- x,y           

@@ -12,7 +12,7 @@ import System.Environment (getArgs)
 
 import System.IO 
 import Control.Concurrent (forkIO)
-
+import Control.Concurrent.MVar
 
 import qualified Data.Map as M
 import Data.List ()
@@ -41,54 +41,50 @@ sockHandler n sock = do
 
     send conn2 (B8.pack (show n ++ " 2"))
    
-    forkIO $ boardInteract conn1 conn2 (initBoard [] 15)
+    forkIO $ boardInteract conn1 conn2
     sockHandler n sock
 
-boardInteract :: Socket -> Socket -> Board -> IO ()
-boardInteract conn1 conn2 oldBoard = do
-
-    msg <- recv conn1 1000 
+boardInteract :: Socket -> Socket -> IO ()
+boardInteract conn1 conn2 = do
+    putStrLn $ "reciving message conn1 "
+    msg <- recv conn1 1000
+    putStrLn $ "reciving message conn1 over"
     let c1 = B8.unpack msg
     let cs = words c1
 
 
-
-    let m = read (cs !! 0)
-    let n = read (cs !! 1)    
-
-
-
-    let newBoard = fst (addMove oldBoard m n White)
-
-
-
-    putStrLn ("white move" ++ c1)
-    putStrLn (showBoard newBoard)
-
-    send conn2 msg
+    if length cs /= 0 then do 
+        let m = read (cs !! 0) :: Int
+        let n = read (cs !! 1) :: Int  
+        -- let newBoard = fst (addMove oldBoard m n White)
+        putStrLn ("Black move" ++ c1)
+        -- putStrLn (showBoard newBoard)
+        send conn2 msg
+    else do
+        putStrLn $ "no message from conn1 "
+        send conn2 msg
 
 
 
-
+    putStrLn $ "reciving message conn2 "
     msg2 <- recv conn2 1000 
     let c2 = B8.unpack msg2
     let cs2 = words c2
 
 
+    if length cs /= 0 then do 
+        let m2 = read (cs2 !! 0) :: Int
+        let n2 = read (cs2 !! 1) :: Int   
+        -- let newBoard2 = fst (addMove newBoard m2 n2 Black)
+        -- putStrLn ("white move" ++ c1)
+        -- putStrLn (showBoard newBoard)
+        send conn2 msg
+        putStrLn ("White move" ++ c2)
+        -- putStrLn (showBoard newBoard2)
+        send conn1 msg2
+    else do
+        putStrLn $ "no message from conn2"
+        send conn1 msg2
 
-    let m2 = read (cs2 !! 0)
-    let n2 = read (cs2 !! 1)    
-
-
-
-    let newBoard2 = fst (addMove newBoard m2 n2 Black)
-
-
-
-    putStrLn ("black move" ++ c2)
-    putStrLn (showBoard newBoard2)
-
-    send conn1 msg2
-
-    boardInteract conn1 conn2 newBoard2
+    boardInteract conn1 conn2 
 
