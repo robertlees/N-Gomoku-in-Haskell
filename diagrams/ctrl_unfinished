@@ -16,14 +16,14 @@ handleEvent :: Game -> BrickEvent () e -> EventM () (Next Game)
 handleEvent game (VtyEvent (V.EvKey key [])) =
   case key of
     -- Move cursor
-    V.KUp       -> continue $ moveCursor Up 1 game
-    V.KDown     -> continue $ moveCursor Down 1 game
-    V.KLeft     -> continue $ moveCursor Left 1 game
-    V.KRight    -> continue $ moveCursor Right 1 game
+    V.KUp       -> continue $ cursorCtrl Up 1 game
+    V.KDown     -> continue $ cursorCtrl Down 1 game
+    V.KLeft     -> continue $ cursorCtrl Left 1 game
+    V.KRight    -> continue $ cursorCtrl Right 1 game
 
     V.KChar ' ' -> continue $ if (_end game) 
                              then game 
-                             else makeMove game . freezeP game
+                             else makeMove game
     V.KChar 'c' -> halt game
     _           -> continue game
 
