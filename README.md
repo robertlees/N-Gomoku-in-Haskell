@@ -57,5 +57,7 @@ The connecting components contain two subparts: Game Renderer and Action Handler
 ### 3. Expectations
 The priority of the project is the stability of the game. Beyond stability, we will try to implement other game functions. If we cannot catch up with the original schedule, we'll try our best to implement gaming AI or online gaming.
 
-
+Source acknowledgement 
+Server.hs referenced to the recursive structure of https://gist.github.com/kreed131/1100325 , as well as the line for packing bytestrings and sending. The socket binding and listening, game-specific data receiving and validity checking are all written by ourselves.
+Client.hs referenced to https://gist.github.com/kreed131/1100407, in terms of socket connection initiation and bytestring sending, we wrote the game-specific chess sending and receiving functions ourselves, and changed the structure from recursive to single-time invoke determined by the player functions.
    
