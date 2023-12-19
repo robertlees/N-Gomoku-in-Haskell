@@ -63,5 +63,6 @@ The priority of the project is the stability of the game. Beyond stability, we w
 2. Client.hs referenced to https://gist.github.com/kreed131/1100407, in terms of socket connection initiation and bytestring sending, we wrote chess sending and receiving functions ourselves for our specific data format, and changed the structure from recursive to single-time invoke determined by the event handler. <br>
 3. UI.hs and Control.hs ideas referenced to https://samtay.github.io/posts/introduction-to-brick. We learned how to formulate Main function for Brick application and how to use liftIO and lens from this blog. We also learned how to put ui, handlers and board together from this blog. However, our code is original. <br>
 4. We learned usage of ForkIO, MVars and other concurrency related information from *Parallel and Concurrent Programming in Haskell by Simon Marlow* : https://www.oreilly.com/library/view/parallel-and-concurrent/9781449335939/ch07.html <br>
-5. The Gomoku game has been implemented by others: https://github.com/mkuzmik/gomoku-game/tree/master. However, we never referenced to this repo and we extend the Gomoku game by adding user-defined rules and online functions. <br>
+5. We learned usage of Table from official Brick demo: https://github.com/jtdaugherty/brick/blob/master/programs/TableDemo.hs <br>
+6. The Gomoku game has been implemented by others: https://github.com/mkuzmik/gomoku-game/tree/master. However, we never referenced to this repo and we extend the Gomoku game by adding user-defined rules and online functions. <br>
    
